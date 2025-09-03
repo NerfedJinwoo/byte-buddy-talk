@@ -147,11 +147,12 @@ const AuthPage = () => {
                   />
                 </div>
                 <Button
-                  className="w-full bg-hsl(var(--whatsapp-green)) hover:bg-hsl(var(--whatsapp-green-dark))"
+                  className="w-full"
                   onClick={handleSignIn}
                   disabled={loading}
+                  size="lg"
                 >
-                  {loading ? "Signing in..." : "Sign In"}
+                  {loading ? "Signing in..." : "Continue"}
                 </Button>
               </TabsContent>
 
@@ -197,11 +198,12 @@ const AuthPage = () => {
                   />
                 </div>
                 <Button
-                  className="w-full bg-hsl(var(--whatsapp-green)) hover:bg-hsl(var(--whatsapp-green-dark))"
+                  className="w-full"
                   onClick={handleSignUp}
                   disabled={loading}
+                  size="lg"
                 >
-                  {loading ? "Creating account..." : "Sign Up"}
+                  {loading ? "Creating account..." : "Create Account"}
                 </Button>
               </TabsContent>
             </Tabs>
