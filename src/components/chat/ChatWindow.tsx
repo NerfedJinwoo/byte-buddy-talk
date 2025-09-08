@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { Send, Phone, Video, MoreVertical } from "lucide-react";
-import VoiceCall from "./VoiceCall";
+import VoiceCallWindow from "./VoiceCallWindow";
 
 interface Message {
   id: string;
@@ -308,11 +308,11 @@ const ChatWindow = ({ chatRoomId }: ChatWindowProps) => {
       </div>
 
       {/* Voice Call Component */}
-      <VoiceCall
+      <VoiceCallWindow
         isOpen={showVoiceCall}
         onClose={() => setShowVoiceCall(false)}
-        recipientName={getChatName()}
-        recipientAvatar={getChatAvatar()}
+        callerName={getChatName()}
+        callerAvatar={getChatAvatar()}
       />
     </div>
   );

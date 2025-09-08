@@ -15,13 +15,11 @@ export const useAuth = () => {
         setUser(session?.user ?? null);
         setLoading(false);
         
-        // Update online status when user signs in/out
-        if (session?.user && event === 'SIGNED_IN') {
+        // Update online status when auth state changes
+        if (session?.user) {
           setTimeout(() => {
-            updateUserStatus(session.user.id, true);
+            updateOnlineStatus(session.user.id, true);
           }, 0);
-        } else if (event === 'SIGNED_OUT') {
-          // Will be handled by signOut function
         }
       }
     );
@@ -32,33 +30,45 @@ export const useAuth = () => {
       setUser(session?.user ?? null);
       setLoading(false);
       
-      // Set user as online if they have an active session
       if (session?.user) {
-        setTimeout(() => {
-          updateUserStatus(session.user.id, true);
-        }, 0);
+        updateOnlineStatus(session.user.id, true);
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    // Update online status when page becomes visible/hidden
+    const handleVisibilityChange = () => {
+      if (user) {
+        updateOnlineStatus(user.id, !document.hidden);
+      }
+    };
 
-  const updateUserStatus = async (userId: string, isOnline: boolean) => {
-    try {
-      const { error } = await supabase.rpc('update_user_status', {
-        user_uuid: userId,
-        online_status: isOnline
-      });
-      if (error) console.error('Error updating user status:', error);
-    } catch (error) {
-      console.error('Error updating user status:', error);
-    }
+    // Update online status before page unload
+    const handleBeforeUnload = () => {
+      if (user) {
+        navigator.sendBeacon('/api/offline', JSON.stringify({ userId: user.id }));
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [user]);
+
+  const updateOnlineStatus = async (userId: string, isOnline: boolean) => {
+    await supabase.rpc('update_user_status', {
+      user_uuid: userId,
+      online_status: isOnline
+    });
   };
 
   const signOut = async () => {
-    // Set user as offline before signing out
     if (user) {
-      await updateUserStatus(user.id, false);
+      await updateOnlineStatus(user.id, false);
     }
     await supabase.auth.signOut();
   };
