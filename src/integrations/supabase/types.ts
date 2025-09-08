@@ -114,6 +114,7 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          is_online: boolean | null
           last_seen: string | null
           status: string | null
           updated_at: string
@@ -125,6 +126,7 @@ export type Database = {
           created_at?: string
           display_name: string
           id?: string
+          is_online?: boolean | null
           last_seen?: string | null
           status?: string | null
           updated_at?: string
@@ -136,6 +138,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          is_online?: boolean | null
           last_seen?: string | null
           status?: string | null
           updated_at?: string
@@ -149,7 +152,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      update_user_status: {
+        Args: { online_status: boolean; user_uuid: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

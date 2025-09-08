@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { Send, Phone, Video, MoreVertical } from "lucide-react";
+import VoiceCall from "./VoiceCall";
 
 interface Message {
   id: string;
@@ -28,6 +29,7 @@ const ChatWindow = ({ chatRoomId }: ChatWindowProps) => {
   const [newMessage, setNewMessage] = useState("");
   const [chatInfo, setChatInfo] = useState<any>(null);
   const [sending, setSending] = useState(false);
+  const [showVoiceCall, setShowVoiceCall] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -191,6 +193,10 @@ const ChatWindow = ({ chatRoomId }: ChatWindowProps) => {
     });
   };
 
+  const handleVoiceCall = () => {
+    setShowVoiceCall(true);
+  };
+
   if (!chatRoomId) {
     return (
       <div className="flex-1 flex items-center justify-center bg-hsl(var(--chat-bg))">
@@ -222,17 +228,17 @@ const ChatWindow = ({ chatRoomId }: ChatWindowProps) => {
               <p className="text-sm text-muted-foreground">Online</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button size="sm" variant="ghost">
-              <Phone className="h-4 w-4" />
-            </Button>
-            <Button size="sm" variant="ghost">
-              <Video className="h-4 w-4" />
-            </Button>
-            <Button size="sm" variant="ghost">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </div>
+            <div className="flex items-center space-x-2">
+              <Button size="sm" variant="ghost" onClick={handleVoiceCall}>
+                <Phone className="h-4 w-4" />
+              </Button>
+              <Button size="sm" variant="ghost">
+                <Video className="h-4 w-4" />
+              </Button>
+              <Button size="sm" variant="ghost">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </div>
         </div>
       </div>
 
@@ -300,6 +306,14 @@ const ChatWindow = ({ chatRoomId }: ChatWindowProps) => {
           </Button>
         </div>
       </div>
+
+      {/* Voice Call Component */}
+      <VoiceCall
+        isOpen={showVoiceCall}
+        onClose={() => setShowVoiceCall(false)}
+        recipientName={getChatName()}
+        recipientAvatar={getChatAvatar()}
+      />
     </div>
   );
 };

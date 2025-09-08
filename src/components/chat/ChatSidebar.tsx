@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
-import { MessageCircle, Plus, LogOut, Search } from "lucide-react";
+import { MessageCircle, Plus, LogOut, Search, Circle } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -14,6 +14,8 @@ interface Profile {
   display_name: string;
   avatar_url?: string;
   status: string;
+  is_online?: boolean;
+  last_seen?: string;
 }
 
 interface ChatRoom {
@@ -44,6 +46,30 @@ const ChatSidebar = ({ selectedChatId, onChatSelect }: ChatSidebarProps) => {
     if (user) {
       fetchChatRooms();
       fetchProfiles();
+      
+      // Set up realtime subscription for profile updates (online status)
+      const channel = supabase
+        .channel('profiles-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles'
+          },
+          (payload) => {
+            setProfiles(prev => prev.map(profile => 
+              profile.user_id === payload.new.user_id 
+                ? { ...profile, ...payload.new }
+                : profile
+            ));
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 
@@ -175,7 +201,7 @@ const ChatSidebar = ({ selectedChatId, onChatSelect }: ChatSidebarProps) => {
                   <Plus className="h-4 w-4" />
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+                <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Start a new chat</DialogTitle>
                 </DialogHeader>
@@ -186,22 +212,67 @@ const ChatSidebar = ({ selectedChatId, onChatSelect }: ChatSidebarProps) => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                   <div className="max-h-60 overflow-y-auto space-y-2">
-                    {filteredProfiles.map((profile) => (
-                      <div
-                        key={profile.id}
-                        className="flex items-center space-x-3 p-2 hover:bg-muted rounded-md cursor-pointer"
-                        onClick={() => createDirectChat(profile.user_id)}
-                      >
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={profile.avatar_url} />
-                          <AvatarFallback>{getInitials(profile.display_name)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{profile.display_name}</p>
-                          <p className="text-sm text-muted-foreground">@{profile.username}</p>
+                    {/* Online Users Section */}
+                    {filteredProfiles.filter(p => p.is_online).length > 0 && (
+                      <>
+                        <div className="text-sm font-medium text-muted-foreground px-2 py-1">
+                          Online Users
                         </div>
-                      </div>
-                    ))}
+                        {filteredProfiles.filter(p => p.is_online).map((profile) => (
+                          <div
+                            key={profile.id}
+                            className="flex items-center space-x-3 p-2 hover:bg-muted rounded-md cursor-pointer"
+                            onClick={() => createDirectChat(profile.user_id)}
+                          >
+                            <div className="relative">
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage src={profile.avatar_url} />
+                                <AvatarFallback>{getInitials(profile.display_name)}</AvatarFallback>
+                              </Avatar>
+                              <Circle className="absolute -bottom-1 -right-1 h-3 w-3 fill-green-500 text-green-500" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium">{profile.display_name}</p>
+                              <p className="text-sm text-muted-foreground">@{profile.username}</p>
+                            </div>
+                            <div className="text-xs text-green-600 font-medium">Online</div>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                    
+                    {/* Offline Users Section */}
+                    {filteredProfiles.filter(p => !p.is_online).length > 0 && (
+                      <>
+                        <div className="text-sm font-medium text-muted-foreground px-2 py-1 mt-4">
+                          Other Users
+                        </div>
+                        {filteredProfiles.filter(p => !p.is_online).map((profile) => (
+                          <div
+                            key={profile.id}
+                            className="flex items-center space-x-3 p-2 hover:bg-muted rounded-md cursor-pointer"
+                            onClick={() => createDirectChat(profile.user_id)}
+                          >
+                            <div className="relative">
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage src={profile.avatar_url} />
+                                <AvatarFallback>{getInitials(profile.display_name)}</AvatarFallback>
+                              </Avatar>
+                              <Circle className="absolute -bottom-1 -right-1 h-3 w-3 fill-gray-400 text-gray-400" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium">{profile.display_name}</p>
+                              <p className="text-sm text-muted-foreground">@{profile.username}</p>
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {profile.last_seen && 
+                                `Last seen ${new Date(profile.last_seen).toLocaleDateString()}`
+                              }
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
                   </div>
                 </div>
               </DialogContent>
